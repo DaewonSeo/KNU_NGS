@@ -38,19 +38,30 @@ merge_fastq(){
         echo "출력 파일이 저장될 폴더명을 입력하세요: "
         read output_directory_name
         if [ -d "$output_directory_name" ]; then
-            echo "이미 폴더가 존재하므로 새로 생성하지 않습니다."
+            echo "폴더가 이미 존재하므로 새로 생성하지 않습니다."
         else
             mkdir $output_directory_name
         fi
 
-        mergeSamples=$(ls ${input_directory_name} | cut -d '_' -f 1-4 | uniq | sort)
-
+        mergeSamples=$(ls ${input_directory_name} | cut -d '_' -f 1-3 | uniq | sort)
+        minValue=1
+        successCount=0
+        failCount=0
         for m in $mergeSamples;
         do
-                echo "$m 생성 완료"
-                targetNum=$(ls ${input_directory_name}/${m}*)
-                cat ${targetNum} > ${output_directory_name}/${m}.fastq.gz
-        done                
+                searchFileName="${m}_"
+                targetNum=$(ls ${input_directory_name}/${searchFileName}*)
+                targetArray=(${targetNum})
+                if [ ${#targetArray[@]} -gt $minValue ]; then
+                        echo "${searchFileName}s1 생성 완료"
+                        cat ${targetNum} > "${output_directory_name}/${searchFileName}s1.fastq.gz"
+                        ((successCount+=1))
+                else
+                        echo "${targetNum}은 병합할 대상이 없어 결과 파일 생성에 실패했습니다."
+                        ((failCount+=1))
+                fi
+        done
+        echo "성공 : ${successCount} / 실패 : ${failCount}"
 
 }
 
@@ -83,7 +94,7 @@ then
         echo "데이터 파일명 변경 서비스를 시작합니다."
         echo "###########################################################"
         echo ""
-        echo""
+        echo ""
         rename_file
 
 elif [[ $selectionNum -eq 2 ]]
